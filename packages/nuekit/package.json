@@ -1,6 +1,6 @@
 {
-  "name": "nuekit",
-  "version": "3.0.0-beta",
+  "name": "nue3-kit",
+  "version": "3.0.0-beta-tad17",
   "description": "The UNIX of the Web",
   "homepage": "https://nuejs.org",
   "license": "MIT",
@@ -11,7 +11,7 @@
     "type": "git"
   },
   "bin": {
-    "nue": "./src/cli.js"
+    "nue3": "./src/cli.js"
   },
   "engines": {
     "bun": ">= 1.2.2"
