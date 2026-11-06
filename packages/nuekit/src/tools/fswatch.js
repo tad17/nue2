@@ -10,6 +10,7 @@ export function fswatch(root, opts = {}) {
 
   // Start watching
   const watcher = watch(root, { recursive: true }, async function (event, rawPath) {
+
     const path = toPosix(rawPath)
     const { onupdate, onremove } = watcher
     if (!path) return
@@ -39,12 +40,11 @@ export function fswatch(root, opts = {}) {
       if (onupdate && extname(path)) {
         await onupdate(path)
       }
-
     } catch (error) {
-      if (error.errno == -2 && onremove) {
-        await onremove(path)
-
-      } else if (error.errno != -2) {
+      // ENOENT может быть -2 (POSIX) или -4058 (Windows), либо проверяем по code
+      if (error.code === 'ENOENT' || error.errno === -2 || error.errno === -4058) {
+        if (onremove) await onremove(path)
+      } else {
         console.error('fswatch error:', error)
       }
     }
@@ -55,7 +55,8 @@ export function fswatch(root, opts = {}) {
 
 // Check if file is an editor backup/temp file
 export function isEditorBackup(path) {
-  return path.endsWith('~') || path.endsWith('.bck')
+  const lower = path.toLowerCase()
+  return lower.endsWith('~') || lower.endsWith('.bck') || lower.endsWith('.tmp') || lower.includes('.tmp.')
 }
 
 // Deduplicate rapid fire events
