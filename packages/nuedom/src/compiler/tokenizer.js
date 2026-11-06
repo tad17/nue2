@@ -82,6 +82,9 @@ function addTag(template, pos, tokens) {
 
 // <img>, <img src="a">
 function toSelfClosing(tag) {
+  // Если тег уже корректно закрывается как />, оставляем его как есть
+  if (tag.endsWith('/>')) return tag
+
   let name = tag.slice(1, -1)
   const i = name.indexOf(' ')
   if (i > 0) name = name.slice(0, i)
