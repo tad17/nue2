@@ -1,0 +1,72 @@
+{
+  "lockfileVersion": 2,
+  "configVersion": 1,
+  "workspaces": {
+    "": {
+      "name": "nue-monorepo",
+    },
+    "packages/nuedom": {
+      "name": "nuedom",
+      "version": "0.1.0",
+    },
+    "packages/nueglow": {
+      "name": "nue-glow",
+      "version": "0.2.5",
+    },
+    "packages/nuekit": {
+      "name": "nuekit",
+      "version": "2.0.0-beta.2",
+      "bin": {
+        "nue": "./src/cli.js",
+      },
+      "dependencies": {
+        "nue-edgeserver": "^0.1.0",
+        "nue-glow": "^0.2.0",
+        "nuedom": "^0.1.0",
+        "nuemark": "^0.7.0",
+        "nuestate": "^0.1.0",
+        "nueyaml": "^0.1.0",
+      },
+    },
+    "packages/nuemark": {
+      "name": "nuemark",
+      "version": "0.7.0",
+      "dependencies": {
+        "nue-glow": "^0.2.0",
+        "nueyaml": "^0.1.0",
+      },
+    },
+    "packages/nueserver": {
+      "name": "nue-edgeserver",
+      "version": "0.1.0",
+    },
+    "packages/nuestate": {
+      "name": "nuestate",
+      "version": "0.1.1",
+    },
+    "packages/nueyaml": {
+      "name": "nueyaml",
+      "version": "0.1.0",
+    },
+    "packages/www": {
+      "name": "www",
+    },
+  },
+  "packages": {
+    "nue-edgeserver": ["nue-edgeserver@workspace:packages/nueserver"],
+
+    "nue-glow": ["nue-glow@workspace:packages/nueglow"],
+
+    "nuedom": ["nuedom@workspace:packages/nuedom"],
+
+    "nuekit": ["nuekit@workspace:packages/nuekit"],
+
+    "nuemark": ["nuemark@workspace:packages/nuemark"],
+
+    "nuestate": ["nuestate@workspace:packages/nuestate"],
+
+    "nueyaml": ["nueyaml@workspace:packages/nueyaml"],
+
+    "www": ["www@workspace:packages/www"],
+  }
+}
