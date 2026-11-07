@@ -15,19 +15,23 @@ function compileDoc(doc) {
 
   if (script) js.push(script)
 
-  const lib_str = compileJS(inspect(lib, { compact: true, depth: Infinity }))
+  // Use a predictable JavaScript string delimiter so compileJS can safely
+  // read string values, including scripts containing apostrophes.
+  const lib_str = compileJS(inspect(lib, { compact: true, depth: Infinity, quoteStyle: 'double' }))
   js.push(`export const lib = ${ lib_str }`)
 
   return js.join('\n')
 }
 
 
-
-const RE_FN = /(script|h_fn|fn):\s*(['"`])([^\2]*?)\2/g
+const RE_FN = /(script|h_fn|fn):\s*("(?:\\.|[^"\\])*")/g
 
 export function compileJS(js) {
-  return js.replace(RE_FN, function(_, key, __, expr) {
-    return key == 'script' ? `${key}: function() { ${expr.trim().replaceAll('\\n', '\n')} \n\t\t}`
+  return js.replace(RE_FN, function(_, key, literal) {
+    // Decode the complete util.inspect string literal, including escaped quotes.
+    const expr = JSON.parse(literal.replace(/\\x([0-9a-f]{2})/gi, '\\u00$1'))
+
+    return key == 'script' ? `${key}: function() { ${expr.trim()} \n\t\t}`
       : `${key}: ${compileFn(expr, key[0] == 'h')}`
   })
 }
@@ -48,5 +52,3 @@ export function compileFn(str, is_event) {
   }
   return '_=>' + (is_simple ? str : `(${str})`)
 }
-
-

@@ -69,6 +69,23 @@ test('<script> block', () => {
 })
 
 
+
+test('script preserves single and double quoted strings', () => {
+  const template = [
+    '<main>',
+    '<script>',
+    "state.on('page', async (c) => {",
+    '  console.log("page:", c)',
+    '})',
+    '</script>',
+    '</main>'
+  ].join('\n')
+  const js = compileNue(template)
+  expect(js).toInclude("state.on('page'")
+  expect(js).toInclude('console.log("page:", c)')
+  expect(() => new Function(js.replace('export const lib =', 'const lib ='))).not.toThrow()
+})
+
 test('compileFn', () => {
   expect(compileFn('_.foo')).toBe('_=>_.foo')
   expect(compileFn('_.foo + 1')).toBe('_=>(_.foo + 1)')
