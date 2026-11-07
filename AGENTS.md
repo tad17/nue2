@@ -971,3 +971,69 @@ And for components:
 
 When discussing Web Components in future, start from this exact branch point rather than treating
 the feature as an external integration problem.
+
+
+## Дополнительно
+# AGENTS.md - Nue2 Fork Development Guide
+
+Этот документ содержит критически важный контекст для разработки и поддержки форка `nuejs/nue` (текущее имя репозитория: `tad17/nue2`). 
+
+Оригинальный проект был практически заброшен автором в начале 2026 года. Этот форк создан для обеспечения стабильной работы Nue, особенно в среде Windows и при использовании редакторов с атомарным сохранением (например, Far Manager).
+
+## 🛠️ Ключевые исправления (уже применены)
+
+### 1. Нормализация путей в Windows (PR #652)
+- **Проблема:** Nue падал или не находил файлы в Windows из-за смешивания `\` и `/` в путях (особенно при HMR и сборке).
+- **Решение:** Втянут и зафиксирован PR #652 (`fix-windows-paths`), который нормализует обратные слеши в прямые на границах ввода.
+- **Файлы:** Разбросаны по `packages/nuekit/src/`, основная логика в обработчиках путей.
+
+### 2. Парсинг самозакрывающихся тегов (Self-closing tags)
+- **Проблема:** Валидный HTML вида `<link rel="stylesheet" href="..." />` парсился некорректно. Функция `toSelfClosing` добавляла лишний слеш, превращая тег в `<link ... //>`, что ломало парсер атрибутов.
+- **Решение:** Добавлена проверка в `packages/nuedom/src/compiler/tokenizer.js`. Если тег уже заканчивается на `/>`, он возвращается без изменений.
+- **Код:**
+  ```javascript
+  function toSelfClosing(tag) {
+    if (tag.endsWith('/>')) return tag // <-- ДОБАВЛЕНО
+    let name = tag.slice(1, -1)
+    const i = name.indexOf(' ')
+    if (i > 0) name = name.slice(0, i)
+    return SELF_CLOSING.includes(name) ? tag.slice(0, -1) + '/>' : tag
+  }
+
+  3. Игнорирование временных файлов Far Manager (.TMP) и ошибка Windows ENOENT
+Проблема: Far Manager сохраняет файлы атомарно, создавая временные файлы вида index.md~RF4f503eb.TMP. Вотчер Nue пытался их прочитать, получал ошибку ENOENT (код -4058 в Windows) и падал с ошибкой в консоль.
+Решение: Модифицирован packages/nuekit/src/tools/fswatch.js.
+Функция isEditorBackup теперь проверяет .tmp в любом регистре.
+Блок catch теперь корректно обрабатывает Windows-специфичный errno: -4058 и code: 'ENOENT'.
+Код:
+javascript
+  export function isEditorBackup(path) {
+    const lower = path.toLowerCase()
+    return lower.endsWith('~') || lower.endsWith('.bck') || lower.endsWith('.tmp') || lower.includes('.tmp.')
+  }
+  
+  // В блоке catch:
+  if (error.code === 'ENOENT' || error.errno === -2 || error.errno === -4058) {
+    if (onremove) await onremove(path)
+  } else {
+    console.error('fswatch error:', error)
+  }
+💻 Локальная разработка и тестирование
+Этот проект является монорепозиторием. Глобальная команда nue может вызывать устаревшую версию. Для тестирования изменений используйте локальный запуск:
+Прямой запуск CLI из исходников:
+bash
+12
+Использование bun link (Рекомендуется для активных проектов):
+bash
+123456
+📂 Архитектурные заметки для AI/Разработчиков
+packages/nuekit/src/tools/fswatch.js: Отвечает за отслеживание изменений файлов. Любые новые фильтры для игнорирования файлов (например, .swp, .bak) добавлять в функцию isEditorBackup или массив ignore.
+packages/nuedom/src/compiler/tokenizer.js: Лексический анализ HTML-шаблонов. Если возникают ошибки парсинга валидного HTML, проверять функции addTag и toSelfClosing.
+packages/nuekit/src/nuekit.js: Основная логика сборки, маршрутизации и генерации страниц.
+🔄 Рабочий процесс Git
+Оригинал: upstream (https://github.com/nuejs/nue.git)
+Мой форк: origin (https://github.com/tad17/nue2.git)
+Чтобы получить обновления из оригинала (если они появятся):
+bash
+123
+Перед началом работы над новым багом всегда создавайте новую ветку от актуального master или fix-windows-paths.
