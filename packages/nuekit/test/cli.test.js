@@ -23,3 +23,7 @@ test('getArgs', () => {
 test('bad option', () => {
   expect(() => getArgs(['-k'])).toThrow('Unknown option: "-k"')
 })
+
+test('--serve opens the browser', () => {
+  expect(getArgs(['--serve'])).toMatchObject({ open_browser: true })
+})

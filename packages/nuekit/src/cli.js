@@ -42,6 +42,7 @@ export function getArgs(argv) {
       if (['-h', '--help'].includes(arg)) args.help = true
       else if (['-v', '--version'].includes(arg)) args.version = true
       else if (['-s', '--silent'].includes(arg)) args.silent = true
+      else if (arg == '--serve') args.open_browser = true
       else if (['--verbose'].includes(arg)) args.verbose = true
 
       // dev & preview options
@@ -86,6 +87,7 @@ Commands
 
 Options
   -p or --port          Serve/preview the site on this port
+  --serve               Open the development server in your default browser
   -n or --dry-run       Show what would be built. Does not build anything
   -s or --silent        Suppress output messages
   -i or --init          build Nue runtime files (rare need)
@@ -197,5 +199,4 @@ if (argv[1].endsWith('cli.js')) {
   const args = getArgs(argv.slice(2))
   await run(args)
 }
-
 

@@ -9,7 +9,7 @@ import { getSystemFiles } from '../system'
 import { getServer } from '../server'
 
 
-export async function serve(site, { silent }) {
+export async function serve(site, { silent, open_browser }) {
   const { conf, assets } = site
   const { root, ignore, port } = conf
 
@@ -50,9 +50,32 @@ export async function serve(site, { silent }) {
 
   const url = server.url.toString()
   if (!silent) console.log('Serving on', url)
+  if (open_browser) openBrowser(url)
 
   return { stop() { watcher.close(); server.stop() }, url, port, }
 
+}
+
+export function getBrowserCommand(url, platform=process.platform) {
+  if (platform == 'win32') return ['cmd.exe', '/c', 'start', '', url]
+  if (platform == 'darwin') return ['open', url]
+  return ['xdg-open', url]
+}
+
+function openBrowser(url) {
+  try {
+    const process = Bun.spawn(getBrowserCommand(url), {
+      stdin: 'ignore',
+      stdout: 'ignore',
+      stderr: 'ignore'
+    })
+
+    process.exited.then(code => {
+      if (code) console.error(`Could not open browser (exit code ${code})`)
+    }).catch(error => console.error('Could not open browser:', error))
+  } catch (error) {
+    console.error('Could not open browser:', error)
+  }
 }
 
 

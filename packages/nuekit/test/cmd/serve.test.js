@@ -1,5 +1,14 @@
 
-import { findAssetByURL, onServe } from '../../src/cmd/serve.js'
+import { findAssetByURL, getBrowserCommand, onServe } from '../../src/cmd/serve.js'
+
+test('default browser command', () => {
+  expect(getBrowserCommand('http://localhost:4000/', 'win32'))
+    .toEqual(['cmd.exe', '/c', 'start', '', 'http://localhost:4000/'])
+  expect(getBrowserCommand('http://localhost:4000/', 'darwin'))
+    .toEqual(['open', 'http://localhost:4000/'])
+  expect(getBrowserCommand('http://localhost:4000/', 'linux'))
+    .toEqual(['xdg-open', 'http://localhost:4000/'])
+})
 
 test('find /', () => {
   const asset = findAssetByURL('/', [{ url: '/' }])
