@@ -14,29 +14,28 @@ test('compileNue', () => {
   expect(js).toStartWith('export const lib = [')
 })
 
-
 test('multiple components', () => {
-  const template = `
+  const template = \`
     <comp1>\${ fn(1) }</comp1>
     <comp2>\${ fn(2) }</comp2>
-  `
+  \`
   const js = compileNue(template)
   expect(js).toContain("tag: 'comp1'")
   expect(js).toContain("tag: 'comp2'")
 })
 
 test('function', () => {
-  const js = compileNue('<b>${ fn(2) }</b>')
+  const js = compileNue('<b>\${ fn(2) }</b>')
   expect(js).toInclude('fn: _=>(_.fn(2))')
 })
 
 test('quoted function', () => {
-  const js = compileNue(`<b>\${ 'foo' + "bar" }</b>`)
-  expect(js).toInclude(`=>('foo' + "bar")`)
+  const js = compileNue(\`<b>\${ 'foo' + "bar" }</b>\`)
+  expect(js).toInclude(\`=>('foo' + "bar")\`)
 })
 
 test('script blocks', () => {
-  const template = `
+  const template = \`
     <script>
       import { format } from './utils.js'
     </script>
@@ -44,7 +43,7 @@ test('script blocks', () => {
       function pretty() { }
     </script>
     <time is="pretty-date">\${ format(date) }</time>
-  `
+  \`
   const js = compileNue(template)
   expect(js).toContain('import { format }')
   expect(js).toContain('pretty() { }')
@@ -52,7 +51,7 @@ test('script blocks', () => {
 })
 
 test('<script> block', () => {
-  const js = compileNue(`
+  const js = compileNue(\`
     <a>
       \${ val }
       <script>
@@ -63,9 +62,27 @@ test('<script> block', () => {
         }
       </script>
     </a>
-  `)
+  \`)
   expect(js).toInclude('script: function()')
   expect(js).toInclude('_=>_.val')
+})
+
+test('script preserves single and double quoted strings', () => {
+  const template = \`
+    <main>
+      <script>
+        state.on('page', async (c) => {
+          console.log("page:", c)
+          console.log('it\\'s fine')
+        })
+      </script>
+    </main>
+  \`
+  const js = compileNue(template)
+  expect(js).toInclude("state.on('page'")
+  expect(js).toInclude('console.log("page:", c)')
+  expect(js).toInclude("console.log('it's fine')")
+  expect(() => new Function(js.replace('export const lib =', 'const lib ='))).not.toThrow()
 })
 
 
@@ -76,4 +93,3 @@ test('compileFn', () => {
   expect(compileFn('i++; log(1)', true)).toBe('(_,$e)=>{i++; log(1)}')
   expect(compileFn('log(1)', true)).toBe('(_,$e)=>log(1)')
 })
-
