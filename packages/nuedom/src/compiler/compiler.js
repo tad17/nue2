@@ -15,7 +15,7 @@ function compileDoc(doc) {
 
   if (script) js.push(script)
 
-  const lib_str = compileJS(inspect(lib, { compact: true, depth: Infinity }))
+  const lib_str = compileJS(lib)
   js.push(`export const lib = ${ lib_str }`)
 
   return js.join('\n')
@@ -23,13 +23,49 @@ function compileDoc(doc) {
 
 
 
-const RE_FN = /(script|h_fn|fn):\s*(['"`])([^\2]*?)\2/g
+export function compileJS(ast) {
+  const replacements = []
+  let markerId = 0
 
-export function compileJS(js) {
-  return js.replace(RE_FN, function(_, key, __, expr) {
-    return key == 'script' ? `${key}: function() { ${expr.trim().replace(/\\r/g, '').replace(/\\n/g, '\n')} \n\t\t}`
-      : `${key}: ${compileFn(expr, key[0] == 'h')}`
+  function prepare(value) {
+    if (Array.isArray(value)) return value.map(prepare)
+    if (!value || typeof value != 'object') return value
+
+    return Object.fromEntries(Object.entries(value).map(([key, val]) => {
+      if (typeof val == 'string' && ['script', 'fn', 'h_fn'].includes(key)) {
+        let marker
+        do {
+          marker = `__NUE_COMPILED_${markerId++}__`
+        } while (containsString(ast, marker))
+
+        const code = key == 'script'
+          ? `function() { ${val.trim()} \n\t\t}`
+          : compileFn(val, key == 'h_fn')
+
+        replacements.push([inspect(marker), code])
+        return [key, marker]
+      }
+
+      return [key, prepare(val)]
+    }))
+  }
+
+  let js = inspect(prepare(ast), { compact: true, depth: Infinity })
+  replacements.forEach(([marker, code]) => {
+    js = js.replace(marker, () => code)
   })
+  return js
+}
+
+function containsString(value, str) {
+  if (typeof value == 'string') return value.includes(str)
+  if (Array.isArray(value)) return value.some(item => containsString(item, str))
+  if (value && typeof value == 'object') {
+    return Object.entries(value).some(([key, val]) =>
+      key.includes(str) || containsString(val, str)
+    )
+  }
+  return false
 }
 
 // compiler.test.js: _.foo + 1 --> _=>(_.foo + 1)
@@ -48,5 +84,3 @@ export function compileFn(str, is_event) {
   }
   return '_=>' + (is_simple ? str : `(${str})`)
 }
-
-

@@ -68,6 +68,24 @@ test('<script> block', () => {
   expect(js).toInclude('_=>_.val')
 })
 
+test('script with mixed quote styles and template literals', () => {
+  const js = compileNue(`
+    <main>
+      <script>
+        console.log("constructor")
+        state.on('page', async (c) => {
+          console.log(\`[handler #\${callCount}] page:\`, c)
+          console.log("page:", c)
+          console.log("$&")
+        })
+      </script>
+    </main>
+  `).replace('export const lib =', 'const lib =')
+
+  expect(() => new Function(js)).not.toThrow()
+  expect(js).toInclude('console.log("$&")')
+})
+
 
 test('compileFn', () => {
   expect(compileFn('_.foo')).toBe('_=>_.foo')
@@ -76,4 +94,3 @@ test('compileFn', () => {
   expect(compileFn('i++; log(1)', true)).toBe('(_,$e)=>{i++; log(1)}')
   expect(compileFn('log(1)', true)).toBe('(_,$e)=>log(1)')
 })
-
